@@ -9,6 +9,7 @@ app.use(cors());
 const { exec } = require("child_process");
 const { stderr, stdout } = require("process");
 const fs = require("fs");
+const { default: chalk } = require("chalk");
 
 //Test route to check if server is running
 app.get("/", (req, res) => {
@@ -34,42 +35,70 @@ const storage = multer.diskStorage({
 // Initialize multer with the storage configuration
 const uploadFile = multer({ storage: storage });
 
-app.post("/upload", uploadFile.single("file"), (req, res) => {
-  // const uploadFile=req.file
-  //console.log("uploadFile",uploadFile);
+app.post("/upload", uploadFile.single("file"), async (req, res) => {
 
-  const lessonId = uuidv4();
-  const videoPath = req.file.path;
-  const outputPath = `./uploads/courses/${lessonId}`;
-  const hlsPath = `${outputPath}/index.m3u8`;
-  console.log("hlsPath", hlsPath);
+  //if no file uploade 
+  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-  //if PATH does not exist, create it
-  if (!fs.existsSync(outputPath)) {
-    fs.mkdirSync(outputPath, { recursive: true });
-  }
+  try {
+    const lessonId = uuidv4();
+    const videoPath = req.file.path;
+    const outputPath = path.join("uploads", "courses", lessonId);
 
-  // ffmpeg command to convert video to HLS format
-  //const ffmpegCommand = `ffmpeg -i "${videoPath}" -codec:v libx264 -codec:a aac -hls_time 10 -hls_playlist_type vod -hls_segment_filename "${outputPath}/segment%03d.ts" -start_number 0 ${hlsPath}`;
-  const ffmpegPath = "C:\\ffmpeg\\ffmpeg\\bin\\ffmpeg.exe";
-  const ffmpegCommand = `"${ffmpegPath}" -i "${videoPath}" -codec:v libx264 -codec:a aac -hls_time 10 -hls_playlist_type vod -hls_segment_filename "${outputPath}/segment%03d.ts" -start_number 0 "${hlsPath}"`;
-  console.log("ffmpegCommand", ffmpegCommand);
-  exec(ffmpegCommand, (error, stdout, stderr) => {
-    if (error) {
-      console.log(`exec error: ${error}`);
+    // Create output folder
+    if (!fs.existsSync(outputPath)) fs.mkdirSync(outputPath, { recursive: true });
+
+    // FFmpeg path
+    const ffmpegPath = "C:\\ffmpeg\\ffmpeg\\bin\\ffmpeg.exe";
+
+    // Define renditions
+    const renditions = [
+      { name: "240p", width: 426, height: 240, bitrate: "400k" },
+      { name: "360p", width: 640, height: 360, bitrate: "800k" },
+      { name: "720p", width: 1280, height: 720, bitrate: "2500k" },
+    ];
+
+    // Build FFmpeg commands for each rendition
+    const commands = renditions.map(r => {
+      const folder = path.join(outputPath, r.name);
+      if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
+      return `"${ffmpegPath}" -i "${videoPath}" -vf scale=${r.width}:${r.height} -c:v libx264 -b:v ${r.bitrate} -c:a aac -hls_time 10 -hls_playlist_type vod -hls_segment_filename "${folder}/segment%03d.ts" "${folder}/index.m3u8"`;
+    });
+
+    // Execute all commands sequentially
+    for (const cmd of commands) {
+      await new Promise((resolve, reject) => {
+        exec(cmd, (error, stdout, stderr) => {
+          if (error) return reject(stderr);
+          console.log(stdout, stderr);
+          resolve();
+        });
+      });
     }
-    console.log(`stdout: ${stdout}`);
-    console.log(`stderr: ${stderr}`);
-    const videoUrl = `http://localhost:${PORT}/uploads/courses/${lessonId}/index.m3u8`;
+
+    // Create master playlist
+    let masterPlaylist = "#EXTM3U\n#EXT-X-VERSION:3\n";
+    renditions.forEach(r => {
+      masterPlaylist += `#EXT-X-STREAM-INF:BANDWIDTH=${parseInt(r.bitrate) * 1000},RESOLUTION=${r.width}x${r.height}\n`;
+      masterPlaylist += `${r.name}/index.m3u8\n`;
+    });
+    fs.writeFileSync(path.join(outputPath, "master.m3u8"), masterPlaylist);
+
+    // Response URL
+    const videoUrl = `http://localhost:${PORT}/uploads/courses/${lessonId}/master.m3u8`;
 
     res.json({
-      message: "Video converted to HLS format",
-      videoUrl: videoUrl,
-      lessonId: lessonId,
+      message: "Video converted to multi-bitrate HLS",
+      videoUrl,
+      lessonId,
     });
-  });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Video conversion failed", details: err.toString() });
+  }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(chalk.greenBright(`Server is running on port ${PORT}`));
 });

@@ -1,0 +1,6 @@
+1.Accept a video upload (via multer).
+2.Convert it into HLS format (.m3u8 playlist + .ts segments) using FFmpeg.
+3.Serve it statically so a video player (like Video.js, hls.js, Safari, or a mobile player) can stream it.
+So essentially this app = Upload video → Convert to HLS → Get a playback URL.
+
+
