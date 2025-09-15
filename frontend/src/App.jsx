@@ -1,17 +1,15 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import VideoPlayer from './VideoPlayer'
 import { useRef } from 'react'
 
 function App() {
   const playerRef = useRef(null)
-  const videoLink = "http://localhost:8081/uploads/courses/47114d26-4ec0-42a8-afcc-94bf98d934c5/index.m3u8"
+  const videoLink = "http://localhost:8081/uploads/courses/a8bd502d-ac10-438b-b9ba-05d766e41ca4/master.m3u8"
 
   const videoPlayerOptions = {
     controls: true,
     responsive: true,
+    
     fluid: true,
     sources: [
       {
