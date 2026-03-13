@@ -1,27 +1,67 @@
-🔹 What is HLS?
-HLS (HTTP Live Streaming) is a media streaming protocol developed by Apple. It breaks the video into small chunks of .ts files and delivers them over HTTP. It uses an M3U8 playlist file to index the segments.
+# 🎬 Video Streaming Application
 
-🔹 What is Adaptive Bitrate Streaming?
-Adaptive Bitrate (ABR) Streaming dynamically adjusts the quality (bitrate and resolution) of a video stream in real-time based on the viewer’s internet speed and device capability.
+A **video streaming platform** that allows users to upload videos and stream them efficiently using **HLS (HTTP Live Streaming)**.  
+The application processes uploaded videos on the backend and delivers adaptive streaming playback through a responsive frontend player.
 
-🔹 How HLS ABR Works
-  Multiple Renditions:
-    The original video is encoded into multiple bitrates/resolutions (e.g., 240p, 480p, 720p, 1080p).
-    Each version is split into short video segments (typically 2 to 10 seconds).
-  
-  Master Playlist (M3U8):
-    A master .m3u8 file lists all the available renditions.
-    Each rendition has its own .m3u8 playlist that references its segment files.
+This project demonstrates **media processing, scalable streaming architecture, and modern frontend integration**.
+
+---
+
+# 🚀 Features
+
+- Video upload functionality
+- Video processing using **FFmpeg**
+- HLS (HTTP Live Streaming) video conversion
+- Adaptive streaming for better playback performance
+- Responsive video player interface
+- Scalable media storage and processing
+
+---
+
+# 🏗 Architecture Overview
+User
+│
+▼
+Frontend (React + Video.js)
+│
+▼
+Backend API (Node.js + Express)
+│
+▼
+File Upload (Multer)
+│
+▼
+Video Processing (FFmpeg)
+│
+▼
+HLS Video Segments (.m3u8 + .ts)
+│
+▼
+Streaming Playback
 
 
- 🔹 Player Behavior:
-    The video player starts by downloading a low-bitrate stream to ensure quick playback.
-    It continuously monitors the buffer level, CPU load, and network speed.
-    If conditions improve, it switches to a higher bitrate; if they worsen, it downgrades.
+---
 
+# 🛠 Tech Stack
 
-  🔹 Tools for Creating HLS ABR Streams
-    FFmpeg (encoding and segmenting)
-    AWS MediaConvert / MediaPackage
-    Wowza / Nimble Streamer
-    Shaka Packager or Bitmovin Encoder
+## Backend
+- **Node.js** – JavaScript runtime
+- **Express.js** – Backend framework
+- **Multer** – File upload handling
+- **FFmpeg** – Video processing and HLS conversion
+- **UUID** – Unique file identification
+- **CORS** – Cross-origin request handling
+- **Chalk** – Terminal logging utilities
+
+## Frontend
+- **React** – Frontend library
+- **Vite** – Fast development build tool
+- **Video.js** – Video player for streaming playback
+
+## Development Tools
+- **ESLint** – Code linting
+- **Vite Plugin React** – React integration with Vite
+
+---
+
+# 📂 Project Structure
